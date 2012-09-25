@@ -8,7 +8,7 @@ CC = gcc
 LD = ld
 ASM = nasm -f elf
 CFLAGS_CROSS = -Werror -nostdlib -fno-builtin -nostartfiles -nodefaultlibs
-GOFLAGS_CROSS = -static
+GOFLAGS_CROSS = -static  -Werror -nostdlib -nostartfiles -nodefaultlibs 
 INCLUDE_DIRS = -I.
 
 ### Sources
