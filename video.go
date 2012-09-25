@@ -1,11 +1,11 @@
 package video
 
 var x, y int
-var vidmem *[80][24][2]byte
+var Vidmem *[25][80][2]byte
 
 func Print(line string) {
-	for _, c := range line {
-		PutChar(c)	
+	for i := 0; i < len(line); i++ {
+		PutChar(rune(line[i]))
 	}
 }
 
@@ -14,10 +14,10 @@ func PutChar(c rune) {
 		x = 0
 		y++ 
 	} else {
-		vidmem[x][y][0] = byte(c)
-		vidmem[x][y][1] = 0x07
+		Vidmem[y][x][0] = byte(c)
+		Vidmem[y][x][1] = 0x07
 		x++
-		if x > 24 {
+		if x > 80 {
 			x = 0
 			y++
 		}
@@ -28,8 +28,8 @@ func PutChar(c rune) {
 func Clear() {
 	for i := 0; i < 80; i++ {
 		for j := 0; j < 25; j++ {
-			vidmem[i][j][0] = 0
-			vidmem[i][j][1] = 0
+			Vidmem[j][i][0] = 0
+			Vidmem[j][i][1] = 0
 		}
 	}
 	x = 0

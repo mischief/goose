@@ -14,7 +14,7 @@ INCLUDE_DIRS = -I.
 
 ### Sources
 
-CORE_SOURCES = loader.s.o video.go.gox goose.go.o 
+CORE_SOURCES = loader.o video.go.o video.gox goose.go.o 
 
 SOURCE_OBJECTS = $(CORE_SOURCES)
 
@@ -34,10 +34,10 @@ boot: kernel.img
 
 ### Rules
 
-%.s.o: %.s
+%.o: %.s
 	$(ASM) $(INCLUDE_DIRS) -o $@ $<
 
-%.go.gox: %.go.o
+%.gox: %.go.o
 	$(OBJCOPY) -j .go_export $< $@
 
 %.go.o: %.go

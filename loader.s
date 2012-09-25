@@ -6,7 +6,7 @@ global __go_register_gc_roots
 global __go_runtime_error
 
 extern go.kernel.Kmain                            ; kmain is defined in kmain.cpp
-extern go.video.vidmem
+extern go.video.Vidmem
 
 MODULEALIGN equ  1<<0                   ; align loaded modules on page boundaries
 MEMINFO     equ  1<<1                   ; provide memory map
@@ -29,7 +29,7 @@ loader:
     mov  [magic], eax                   ; Multiboot magic number
     mov  [mbd], ebx                     ; Multiboot info structure
 
-    mov  dword[go.video.vidmem], 0xB8000
+    mov  dword[go.video.Vidmem], 0xB8000
     call go.kernel.Kmain                          ; call kernel proper
  
     cli
