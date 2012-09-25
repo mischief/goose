@@ -1,8 +1,8 @@
 package kernel
 
-var Vidmem *[1024]byte
+import "video"
 
 func Kmain() {
-	Vidmem[0] = 65
-	Vidmem[1] = 0x7f
+	video.Clear()
+	video.Println("cats")
 }

@@ -3,6 +3,7 @@
 CC_CROSS = i586-elf-gcc
 LD_CROSS = i586-elf-ld
 GO_CROSS = i586-elf-gccgo
+OBJCOPY = i586-elf-objcopy
 PREPROC = $(CC_CROSS) -E -x c -P
 CC = gcc
 LD = ld
@@ -13,7 +14,7 @@ INCLUDE_DIRS = -I.
 
 ### Sources
 
-CORE_SOURCES = loader.s.o goose.go.o
+CORE_SOURCES = loader.s.o video.go.gox goose.go.o 
 
 SOURCE_OBJECTS = $(CORE_SOURCES)
 
@@ -36,8 +37,11 @@ boot: kernel.img
 %.s.o: %.s
 	$(ASM) $(INCLUDE_DIRS) -o $@ $<
 
+%.go.gox: %.go.o
+	$(OBJCOPY) -j .go_export $< $@
+
 %.go.o: %.go
-	$(GO_CROSS) $(GOFLAGS_CROSS) -o $@ -c $<
+	$(GO_CROSS) $(GOFLAGS_CROSS) $(INCLUDE_DIRS) -o $@ -c $<
 
 kernel.bin: $(SOURCE_OBJECTS)
 	$(LD_CROSS) -T link.ld -o kernel.bin $(SOURCE_OBJECTS)
