@@ -1,19 +1,25 @@
-global loader                           ; making entry point visible to linker
-global magic                            ; we will use this in kmain
-global mbd                              ; we will use this in kmain
+;
+; Adapted from osdev.org's Bare Bones tutorial http://wiki.osdev.org/Bare_Bones
+;
 
+global loader
+global magic
+global mbd
+
+; Go compatibility
 global __go_register_gc_roots
 global __go_runtime_error
 
 global __unsafe_get_addr
 
-extern go.kernel.Kmain                            ; kmain is defined in kmain.cpp
+extern go.kernel.Kmain
 
-MODULEALIGN equ  1<<0                   ; align loaded modules on page boundaries
-MEMINFO     equ  1<<1                   ; provide memory map
-FLAGS       equ  MODULEALIGN | MEMINFO  ; this is the Multiboot 'flag' field
-MAGIC       equ  0x1BADB002             ; 'magic number' lets bootloader find the header
-CHECKSUM    equ -(MAGIC + FLAGS)        ; checksum required
+; Multiboot stuff
+MODULEALIGN equ  1<<0
+MEMINFO     equ  1<<1
+FLAGS       equ  MODULEALIGN | MEMINFO
+MAGIC       equ  0x1BADB002
+CHECKSUM    equ -(MAGIC + FLAGS)
 
 section .text
 
@@ -22,22 +28,22 @@ align 4
     dd FLAGS
     dd CHECKSUM
 
-; reserve initial kernel stack space
-STACKSIZE equ 0x4000                    ; that's 16k.
+STACKSIZE equ 0x4000  ; Define our stack size at 16k
 
 loader:
-    mov  esp, stack + STACKSIZE         ; set up the stack
-    mov  [magic], eax                   ; Multiboot magic number
-    mov  [mbd], ebx                     ; Multiboot info structure
+    mov  esp, stack + STACKSIZE ; Setup stack pointer
 
-    call go.kernel.Kmain                          ; call kernel proper
+    mov  [magic], eax
+    mov  [mbd], ebx
+
+    call go.kernel.Kmain   ; Jump to Go's kernel.Kmain
 
     cli
 .hang:
-    hlt                                 ; halt machine should kernel return
+    hlt
     jmp  .hang
 
-__unsafe_get_addr:
+__unsafe_get_addr:  ; Allows us to convert int -> ptr in go
     push ebp
     mov ebp,esp
     mov eax, [ebp+8]
@@ -45,6 +51,7 @@ __unsafe_get_addr:
     pop  ebp
     ret
 
+; Go compatibility - noop'd
 __go_runtime_error:
 __go_register_gc_roots:
     ret
@@ -52,6 +59,6 @@ __go_register_gc_roots:
 section .bss
 
 align 4
-stack: resb STACKSIZE                   ; reserve 16k stack on a doubleword boundary
+stack: resb STACKSIZE   ; Reserve 16k for stack
 magic: resd 1
 mbd:   resd 1
