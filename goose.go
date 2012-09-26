@@ -3,6 +3,7 @@ package kernel
 import "video"
 
 func Kmain() {
+	video.Init()
 	video.Clear()
 	video.Print("  ______  _____       _____    _          \n")
 	video.Print(" / _____)/ ___ \\     / ___ \\  | |         \n")
