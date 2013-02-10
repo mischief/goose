@@ -1,4 +1,4 @@
-### Build arams
+### Build params
 
 CC_CROSS = i586-elf-gcc
 LD_CROSS = i586-elf-ld
