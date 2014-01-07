@@ -6,13 +6,10 @@ global loader
 global magic
 global mbd
 
-; Go compatibility
-global __go_register_gc_roots
-global __go_runtime_error
+global gdt_flush
+global idt_flush
 
-global __unsafe_get_addr
-
-extern go.kernel.Kmain
+extern goose_main
 
 ; Multiboot stuff
 MODULEALIGN equ  1<<0
@@ -21,8 +18,8 @@ FLAGS       equ  MODULEALIGN | MEMINFO
 MAGIC       equ  0x1BADB002
 CHECKSUM    equ -(MAGIC + FLAGS)
 
-section .text
 
+section .multiboot
 align 4
     dd MAGIC
     dd FLAGS
@@ -30,35 +27,48 @@ align 4
 
 STACKSIZE equ 0x4000  ; Define our stack size at 16k
 
+section .text
 loader:
     mov  esp, stack + STACKSIZE ; Setup stack pointer
 
     mov  [magic], eax
     mov  [mbd], ebx
 
-    call go.kernel.Kmain   ; Jump to Go's kernel.Kmain
+    ; fpu init early on
+    fninit
+
+    sti
+
+    call goose_main
 
     cli
+.exit:
 .hang:
     hlt
     jmp  .hang
 
-__unsafe_get_addr:  ; Allows us to convert int -> ptr in go
-    push ebp
-    mov ebp,esp
-    mov eax, [ebp+8]
-    mov  esp,ebp
-    pop  ebp
-    ret
+gdt_flush:
+   mov eax, [esp+4]  ; Get the pointer to the GDT, passed as a parameter.
+   lgdt [eax]        ; Load the new GDT pointer
 
-; Go compatibility - noop'd
-__go_runtime_error:
-__go_register_gc_roots:
-    ret
+   mov ax, 0x10      ; 0x10 is the offset in the GDT to our data segment
+   mov ds, ax        ; Load all data segment selectors
+   mov es, ax
+   mov fs, ax
+   mov gs, ax
+   mov ss, ax
+   jmp 0x08:.flush   ; 0x08 is the offset to our code segment: Far jump!
+.flush:
+   ret
+
+idt_flush:
+   mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter. 
+   lidt [eax]        ; Load the IDT pointer.
+   ret
 
 section .bss
-
 align 4
-stack: resb STACKSIZE   ; Reserve 16k for stack
 magic: resd 1
 mbd:   resd 1
+stack: resb STACKSIZE   ; Reserve 16k for stack
+

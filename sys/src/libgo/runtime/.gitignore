@@ -1,0 +1,9 @@
+# generated from respective .goc files
+iface.c
+malloc.c
+map.c
+mprof.c
+reflect.c
+sema.c
+string.c
+time.c

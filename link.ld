@@ -2,28 +2,36 @@ ENTRY (loader)
 
 SECTIONS
 {
-    . = 0x00100000;
+    . = 1M;
 
-    .text ALIGN (0x1000) :
+    .text BLOCK(4k) : ALIGN (4k)
     {
+        *(.multiboot)
         *(.text)
     }
 
-    .rodata ALIGN (0x1000) :
+    .rodata BLOCK(4k) : ALIGN (4k)
     {
-        *(.rodata*)
+        *(.rodata)
     }
 
-    .data ALIGN (0x1000) :
+    .data BLOCK(4k) : ALIGN (4k)
     {
         *(.data)
     }
 
-    .bss :
+    .go_export BLOCK(4k) : ALIGN(4k)
+    {
+        *(.go_export)
+    }
+
+    .bss BLOCK(4k) : ALIGN (4k)
     {
         sbss = .;
         *(COMMON)
         *(.bss)
         ebss = .;
     }
+
+    end = .;
 }

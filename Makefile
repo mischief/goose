@@ -1,52 +1,56 @@
 ### Build params
 
-CC_CROSS = i586-elf-gcc
-LD_CROSS = i586-elf-ld
-GO_CROSS = i586-elf-gccgo
-OBJCOPY = i586-elf-objcopy
-PREPROC = $(CC_CROSS) -E -x c -P
-CC = gcc
-LD = ld
-ASM = nasm -f elf
-CFLAGS_CROSS = -Werror -nostdlib -fno-builtin -nostartfiles -nodefaultlibs
-GOFLAGS_CROSS = -static  -Werror -nostdlib -nostartfiles -nodefaultlibs 
-INCLUDE_DIRS = -I.
+TOPDIR := $(shell pwd)
+export TOPDIR
+
+include Makefile.inc
 
 ### Sources
 
-CORE_SOURCES = loader.o video.go.o video.gox goose.go.o 
+CORE_SOURCES = \
+	loader.o \
+	multiboot_main.o \
+	gdt.o \
+	interrupt.o \
+	main.o \
+
+LIBS = 386/lib/libgo.a 386/lib/libc.a 386/lib/libm.a
 
 SOURCE_OBJECTS = $(CORE_SOURCES)
 
- 
 ### Targets
 
 all: kernel.img
 
 clean:
-	rm -f $(SOURCE_OBJECTS) $(TEST_EXECS) kernel.bin kernel.img
+	rm -f *.o
+	rm -f $(LIBS)
+	rm -f kernel.exe kernel.bin kernel.img
+	cd sys/src; make clean
 
 boot-nogrub: kernel.bin
 	qemu-system-i386 -kernel kernel.bin
 
 boot: kernel.img
-	qemu-system-i386 -fda kernel.img 
+	qemu-system-i386 -fda kernel.img
 
 ### Rules
 
-%.o: %.s
-	$(ASM) $(INCLUDE_DIRS) -o $@ $<
+386/lib/libm.a:
+	cd sys/src/libm; make
 
-%.gox: %.go.o
-	$(OBJCOPY) -j .go_export $< $@
+386/lib/libc.a:
+	cd sys/src/libc; make
 
-%.go.o: %.go
-	$(GO_CROSS) $(GOFLAGS_CROSS) $(INCLUDE_DIRS) -o $@ -c $<
+386/lib/libgo.a:
+	cd sys/src/libgo; make
 
-kernel.bin: $(SOURCE_OBJECTS)
-	$(LD_CROSS) -T link.ld -o kernel.bin $(SOURCE_OBJECTS)
- 
-kernel.img: kernel.bin
+kernel.exe: $(LIBS) $(SOURCE_OBJECTS)
+	$(LD_CROSS) $(GOFLAGS_CROSS) $(GO_IMPORT_DIRS) -Wl,-T,link.ld -L386/lib -o $@ $(SOURCE_OBJECTS) -lgo -lgcc -lm -lc
+
+kernel.img: kernel.exe
+	strip -o kernel.bin kernel.exe
 	cp floppy.img.template kernel.img
 	mcopy -i kernel.img -/ grub/ ::/
 	mcopy -i kernel.img kernel.bin ::/
+
